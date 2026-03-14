@@ -62,7 +62,7 @@
     "cz-conventional-changelog-cmyr": "^2.0.0",
     "debug": "^4.4.3",
     "eslint": "^9.34.0",
-    "eslint-config-cmyr": "^2.1.4",
+    "eslint-config-cmyr": "^2.1.5",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "octokit": "^5.0.5",
@@ -132,7 +132,22 @@
       "esbuild": "^0.25.12",
       "path-to-regexp": "^6.3.0",
       "tmp": "^0.2.4"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "-",
+      "3",
+      "b",
+      "e",
+      "esbuild",
+      "i",
+      "l",
+      "q",
+      "r",
+      "s",
+      "sharp",
+      "t",
+      "workerd"
+    ]
   },
   "type": "module"
 }

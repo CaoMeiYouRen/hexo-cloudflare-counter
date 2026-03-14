@@ -109,8 +109,8 @@ importers:
         specifier: ^9.34.0
         version: 9.39.2(jiti@2.6.1)
       eslint-config-cmyr:
-        specifier: ^2.1.4
-        version: 2.1.4(@typescript-eslint/parser@8.55.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
+        specifier: ^2.1.5
+        version: 2.1.5(@typescript-eslint/parser@8.55.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -2616,8 +2616,8 @@ packages:
     engines: {node: '>=6.0'}
     hasBin: true
 
-  eslint-config-cmyr@2.1.4:
-    resolution: {integrity: sha512-AUJjwBfmDW6qAM4i3TK6UXoVrxWZg8y0QaeHhEYxDdxhCOVnvGHF2qw6Fz5N7/bB5QIGSCBLmWPVKtiDbOkTPQ==}
+  eslint-config-cmyr@2.1.5:
+    resolution: {integrity: sha512-6EV1SVaBOCWmVv6U+uFbsI2csmpZwvXZF0YJq1scKo40/iglgnxVOPGq/m0v5yb3Bv5LoTiJdxwHqQu2Bo8vKQ==}
     engines: {node: '>=18'}
     peerDependencies:
       eslint: '>=9'
@@ -6664,7 +6664,7 @@ snapshots:
       read-pkg: 10.0.0
       registry-auth-token: 5.1.1
       semantic-release: 25.0.3(typescript@5.9.3)
-      semver: 7.7.3
+      semver: 7.7.4
       tempy: 3.1.2
 
   '@semantic-release/release-notes-generator@14.1.0(semantic-release@25.0.3(typescript@5.9.3))':
@@ -8136,7 +8136,7 @@ snapshots:
     optionalDependencies:
       source-map: 0.6.1
 
-  eslint-config-cmyr@2.1.4(@typescript-eslint/parser@8.55.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3):
+  eslint-config-cmyr@2.1.5(@typescript-eslint/parser@8.55.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3):
     dependencies:
       '@eslint/js': 9.39.2
       '@stylistic/eslint-plugin': 5.8.0(eslint@9.39.2(jiti@2.6.1))

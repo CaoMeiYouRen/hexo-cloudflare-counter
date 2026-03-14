@@ -1,4 +1,4 @@
-export type Bindings = {
+export interface Bindings {
     NODE_ENV: string
     PORT: string
     LOGFILES: string

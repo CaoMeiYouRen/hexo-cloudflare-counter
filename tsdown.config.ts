@@ -1,6 +1,6 @@
-import { defineConfig, type Options } from 'tsdown'
+import { defineConfig, type UserConfig } from 'tsdown'
 
-const tsupOptions: Options = {
+const tsupOptions: UserConfig = {
     platform: 'node', // 目标平台
     entry: [],
     format: ['esm'],
@@ -18,7 +18,7 @@ const tsupOptions: Options = {
     // bundle: true,
 }
 
-const cloudflareOptions: Options = {
+const cloudflareOptions: UserConfig = {
     ...tsupOptions,
     entry: ['src/cloudflare-workers.ts'],
     format: ['esm'],
