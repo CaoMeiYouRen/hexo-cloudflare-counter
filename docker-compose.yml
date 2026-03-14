@@ -1,0 +1,17 @@
+version: "3"
+
+services:
+  server:
+    # build: .
+    container_name: 'hexo-cloudflare-counter'
+    image: ${DOCKER_IMAGE:-caomeiyouren/hexo-cloudflare-counter}
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      TZ: "Asia/Shanghai"
+      LOGFILES: 'true'
+    volumes:
+      - ./logs:/app/logs
