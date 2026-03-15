@@ -39,18 +39,18 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v5
         with:
-          node-version: "24"
+          node-version: "lts/*"
           cache: "pnpm"
       - run: pnpm i --frozen-lockfile
       - run: pnpm run lint
       - run: pnpm run build
       - run: pnpm run test
-      - name: Create Version PR or Publish Packages
-        uses: changesets/action@v1
-        with:
-          version: pnpm run version:packages
-          publish: pnpm run release:packages
-          title: "chore: version packages"
-          commit: "chore: version packages"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Create Version PR or Publish Packages
+      #   uses: changesets/action@v1
+      #   with:
+      #     version: pnpm run version:packages
+      #     publish: pnpm run release:packages
+      #     title: "chore: version packages"
+      #     commit: "chore: version packages"
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

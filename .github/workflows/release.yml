@@ -31,12 +31,12 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v5
         with:
-          node-version: "24"
+          node-version: "lts/*"
           cache: "pnpm"
       - run: pnpm i --frozen-lockfile
       - run: pnpm run lint
       - run: pnpm run build
       - run: pnpm run test
-      - env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm run release:service
+      # - env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: pnpm run release:service
