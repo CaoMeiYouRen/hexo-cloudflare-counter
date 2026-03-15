@@ -2,7 +2,7 @@ name = "hexo-cloudflare-counter"
 # 默认为 Production 环境
 main = "dist/cloudflare-workers.mjs"
 minify = true
-compatibility_date = "2024-10-20"
+compatibility_date = "2026-02-24"
 compatibility_flags = ["nodejs_compat"]
 assets = { directory = "public" }
 
