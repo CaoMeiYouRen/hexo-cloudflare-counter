@@ -71,6 +71,7 @@ test('POST and GET /1.1/classes/Counter create and query a counter', async () =>
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
     })
+    expect(created.objectId).toMatch(/^[0-9a-f]{24}$/)
 
     const queryResponse = await app.request('/1.1/classes/Counter?where=%7B%22url%22%3A%22%2Fposts%2Fhello%22%7D')
     expect(queryResponse.status).toBe(200)

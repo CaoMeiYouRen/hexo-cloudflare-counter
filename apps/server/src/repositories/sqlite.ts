@@ -1,8 +1,7 @@
-import { randomUUID } from 'node:crypto'
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
 import Database from 'better-sqlite3'
-import type { CounterRepository, CounterRecord, CreateCounterInput } from '@hexo-cloudflare-counter/core'
+import { generateObjectId, type CounterRepository, type CounterRecord, type CreateCounterInput } from '@hexo-cloudflare-counter/core'
 
 interface CounterRow {
     object_id: string
@@ -11,10 +10,6 @@ interface CounterRow {
     time: number
     created_at: string
     updated_at: string
-}
-
-function createObjectId(): string {
-    return randomUUID().replaceAll('-', '')
 }
 
 function toTimestamp(): string {
@@ -98,7 +93,7 @@ export class SQLiteCounterRepository implements CounterRepository {
 
         const timestamp = toTimestamp()
         const record: CounterRecord = {
-            objectId: createObjectId(),
+            objectId: generateObjectId(),
             title: input.title ?? '',
             url: input.url,
             time: input.time ?? 0,

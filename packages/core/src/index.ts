@@ -1,4 +1,5 @@
 export * from './types'
 export * from './counter/types'
+export * from './counter/object-id'
 export * from './counter/service'
 export * from './routes'

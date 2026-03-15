@@ -1,5 +1,5 @@
-import { randomUUID } from 'node:crypto'
-import type { CounterRepository, CounterRecord, CreateCounterInput } from '@hexo-cloudflare-counter/core'
+import type { D1Database, D1PreparedStatement } from '@cloudflare/workers-types'
+import { generateObjectId, type CounterRepository, type CounterRecord, type CreateCounterInput } from '@hexo-cloudflare-counter/core'
 
 interface CounterRow {
     object_id: string
@@ -10,23 +10,10 @@ interface CounterRow {
     updated_at: string
 }
 
-export interface D1PreparedStatementLike {
-    bind(...values: unknown[]): D1PreparedStatementLike
-    first<T>(): Promise<T | null>
-    all<T>(): Promise<{ results: T[] }>
-    run(): Promise<unknown>
-}
-
-export interface D1DatabaseLike {
-    prepare(query: string): D1PreparedStatementLike
-    exec(query: string): Promise<unknown>
-}
+export type D1PreparedStatementLike = D1PreparedStatement
+export type D1DatabaseLike = D1Database
 
 const initializedDatabases = new WeakMap<object, Promise<void>>()
-
-function createObjectId(): string {
-    return randomUUID().replaceAll('-', '')
-}
 
 function toTimestamp(): string {
     return new Date().toISOString()
@@ -104,7 +91,7 @@ export class D1CounterRepository implements CounterRepository {
 
         const timestamp = toTimestamp()
         const record: CounterRecord = {
-            objectId: createObjectId(),
+            objectId: generateObjectId(),
             title: input.title ?? '',
             url: input.url,
             time: input.time ?? 0,
