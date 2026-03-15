@@ -1,0 +1,8 @@
+{
+  "name": "@hexo-cloudflare-counter/server",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@hexo-cloudflare-counter/core": "workspace:*"
+  }
+}

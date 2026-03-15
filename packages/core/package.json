@@ -1,0 +1,5 @@
+{
+  "name": "@hexo-cloudflare-counter/core",
+  "private": true,
+  "type": "module"
+}

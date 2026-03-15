@@ -20,7 +20,7 @@ const tsupOptions: UserConfig = {
 
 const cloudflareOptions: UserConfig = {
     ...tsupOptions,
-    entry: ['src/cloudflare-workers.ts'],
+    entry: ['apps/server/src/cloudflare-workers.ts'],
     format: ['esm'],
     minify: false,
     treeshake: true,
@@ -30,4 +30,4 @@ const cloudflareOptions: UserConfig = {
     },
 }
 
-export default defineConfig([...['src/index.ts', 'src/vercel.ts', 'src/bun.ts'].map((e) => ({ ...tsupOptions, entry: [e] })), cloudflareOptions])
+export default defineConfig([...['apps/server/src/index.ts', 'apps/server/src/vercel.ts', 'apps/server/src/bun.ts'].map((e) => ({ ...tsupOptions, entry: [e] })), cloudflareOptions])

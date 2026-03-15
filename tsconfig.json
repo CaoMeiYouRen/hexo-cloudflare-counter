@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "baseUrl": ".",
         "module": "esnext",
         "target": "esnext",
         "noImplicitAny": false,
@@ -18,8 +19,11 @@
         "moduleResolution": "bundler",
         "esModuleInterop": true,
         "paths": {
-            "@/*": [
-                "./src/*"
+            "@hexo-cloudflare-counter/core": [
+                "./packages/core/src/index.ts"
+            ],
+            "@hexo-cloudflare-counter/core/*": [
+                "./packages/core/src/*"
             ]
         },
         "lib": [
@@ -33,10 +37,10 @@
         "jsxImportSource": "hono/jsx"
     },
     "include": [
-        "src/*.ts",
-        "src/**/*.ts",
-        "src/*.tsx",
-        "src/**/*.tsx",
+        "apps/**/*.ts",
+        "apps/**/*.tsx",
+        "packages/**/*.ts",
+        "packages/**/*.tsx",
         "scripts/*.ts",
         "test/*.ts",
         "*.config.ts",

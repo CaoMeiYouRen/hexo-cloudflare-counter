@@ -14,7 +14,7 @@ MAX_BODY_SIZE = 104857600
 
 [env.dev]
 # Development 环境配置
-main = "src/cloudflare-workers.ts"
+main = "apps/server/src/cloudflare-workers.ts"
 minify = false
 assets = { directory = "public" }
 

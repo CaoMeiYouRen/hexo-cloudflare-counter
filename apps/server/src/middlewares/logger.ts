@@ -1,6 +1,6 @@
-import path from 'path'
+import path from 'node:path'
 import { logger as honoLogger } from 'hono/logger'
-import { IS_CLOUDFLARE_WORKERS, LOG_LEVEL, LOGFILES } from '@/env'
+import { IS_CLOUDFLARE_WORKERS, LOG_LEVEL, LOGFILES } from '../env'
 
 function stringifyLogValue(value: unknown): string {
     if (typeof value === 'string') {
@@ -32,6 +32,7 @@ async function createLogger() {
     if (IS_CLOUDFLARE_WORKERS) {
         return console
     }
+
     const logDir = path.resolve('logs')
     const winston = await import('winston')
     const DailyRotateFile = (await import('winston-daily-rotate-file')).default
@@ -51,7 +52,8 @@ async function createLogger() {
         format,
         auditFile: path.join(logDir, '.audit.json'),
     }
-    const winstonLogger = winston.createLogger({
+
+    return winston.createLogger({
         level: LOG_LEVEL,
         exitOnError: false,
         transports: [
@@ -93,10 +95,10 @@ async function createLogger() {
             }),
         ].filter(Boolean),
     })
-    return winstonLogger
 }
 
 const logger = await createLogger()
 const loggerMiddleware = honoLogger(logger.info)
+
 export { loggerMiddleware }
 export default logger
