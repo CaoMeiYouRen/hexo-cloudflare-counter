@@ -1,16 +1,35 @@
-import { readFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
 import { pathToFileURL } from 'node:url'
 import { parseLeanCloudCounterJsonl, type MigratableCounterRecord } from '@hexo-cloudflare-counter/core'
 import { ensureSqliteCounterSchema, openSqliteDatabase } from '../apps/server/src/repositories/sqlite'
 
-interface CliOptions {
+export type MigrationTarget = 'sqlite' | 'd1'
+export type D1MigrationMode = 'local' | 'remote'
+
+interface BaseCliOptions {
     source: string
-    sqlitePath: string
     reset: boolean
     force: boolean
 }
+
+export interface SqliteCliOptions extends BaseCliOptions {
+    target?: 'sqlite'
+    sqlitePath: string
+}
+
+export interface D1CliOptions extends BaseCliOptions {
+    target: 'd1'
+    d1Database: string
+    d1Mode: D1MigrationMode
+    wranglerConfig: string
+    wranglerEnv?: string
+}
+
+export type CliOptions = SqliteCliOptions | D1CliOptions
 
 export interface MigrationSummary {
     totalLines: number
@@ -21,6 +40,20 @@ export interface MigrationSummary {
     blankLines: number
     importedRows: number
 }
+
+export interface CommandRunnerResult {
+    status: number | null
+    error?: Error
+    stderr?: string | Buffer | null
+}
+
+export type CommandRunner = (command: string, args: string[]) => CommandRunnerResult
+
+const counterSchemaStatements = [
+    'CREATE TABLE IF NOT EXISTS counters (id INTEGER PRIMARY KEY AUTOINCREMENT, object_id TEXT NOT NULL UNIQUE, url TEXT NOT NULL UNIQUE, title TEXT NOT NULL DEFAULT \'\', time INTEGER NOT NULL DEFAULT 0 CHECK (time >= 0), created_at TEXT NOT NULL, updated_at TEXT NOT NULL)',
+    'CREATE UNIQUE INDEX IF NOT EXISTS idx_counters_object_id ON counters(object_id)',
+    'CREATE UNIQUE INDEX IF NOT EXISTS idx_counters_url ON counters(url)',
+] as const
 
 function toComparableFileUrl(filePathOrUrl: string): string {
     if (filePathOrUrl.startsWith('file://')) {
@@ -59,9 +92,72 @@ function hasCliFlag(flagName: string): boolean {
     return process.argv.includes(flagName)
 }
 
+function parseMigrationTarget(value: string | undefined): MigrationTarget {
+    if (!value || value === 'sqlite') {
+        return 'sqlite'
+    }
+    if (value === 'd1') {
+        return value
+    }
+    throw new Error(`Unsupported migration target: ${value}`)
+}
+
+export function extractD1DatabaseNameFromWranglerToml(content: string, envName?: string): string | undefined {
+    const lines = content.split(/\r?\n/u)
+    const envSection = envName ? `[[env.${envName}.d1_databases]]` : undefined
+    let currentSection = ''
+    let topLevelDatabaseName: string | undefined
+
+    for (const rawLine of lines) {
+        const line = rawLine.trim()
+        if (line.length === 0 || line.startsWith('#')) {
+            continue
+        }
+
+        const arraySectionMatch = /^\[\[(.+)\]\]$/u.exec(line)
+        if (arraySectionMatch) {
+            currentSection = `[[${arraySectionMatch[1]}]]`
+            continue
+        }
+
+        const tableSectionMatch = /^\[(.+)\]$/u.exec(line)
+        if (tableSectionMatch) {
+            currentSection = `[${tableSectionMatch[1]}]`
+            continue
+        }
+
+        const databaseNameMatch = /^database_name\s*=\s*"([^"]+)"/u.exec(line)
+        if (!databaseNameMatch) {
+            continue
+        }
+
+        const databaseName = databaseNameMatch[1]
+        if (currentSection === '[[d1_databases]]' && !topLevelDatabaseName) {
+            topLevelDatabaseName = databaseName
+        }
+        if (envSection && currentSection === envSection) {
+            return databaseName
+        }
+        if (!envSection && currentSection === '[[d1_databases]]') {
+            return databaseName
+        }
+    }
+
+    return topLevelDatabaseName
+}
+
+export function readD1DatabaseNameFromWranglerConfig(configPath: string, envName?: string): string | undefined {
+    try {
+        const content = readFileSync(configPath, 'utf8')
+        return extractD1DatabaseNameFromWranglerToml(content, envName)
+    } catch {
+        return undefined
+    }
+}
+
 function parseCliOptions(): CliOptions {
     const source = readCliOption('--source') ?? process.env.MIGRATION_SOURCE
-    const sqlitePath = readCliOption('--sqlite-path') ?? process.env.SQLITE_PATH ?? 'data/counters.sqlite'
+    const target = parseMigrationTarget(readCliOption('--target') ?? process.env.MIGRATION_TARGET)
     const reset = hasCliFlag('--reset') || parseBooleanFlag(process.env.MIGRATION_RESET)
     const force = hasCliFlag('--force') || parseBooleanFlag(process.env.MIGRATION_FORCE)
 
@@ -69,9 +165,33 @@ function parseCliOptions(): CliOptions {
         throw new Error('Missing migration source. Use --source <file> or set MIGRATION_SOURCE.')
     }
 
+    if (target === 'sqlite') {
+        const sqlitePath = readCliOption('--sqlite-path') ?? process.env.SQLITE_PATH ?? 'data/counters.sqlite'
+        return {
+            source,
+            target,
+            sqlitePath,
+            reset,
+            force,
+        }
+    }
+
+    const wranglerConfig = readCliOption('--wrangler-config') ?? process.env.MIGRATION_WRANGLER_CONFIG ?? 'wrangler.toml'
+    const wranglerEnv = readCliOption('--wrangler-env') ?? process.env.MIGRATION_WRANGLER_ENV
+    const d1Database = readCliOption('--d1-database')
+        ?? process.env.MIGRATION_D1_DATABASE
+        ?? readD1DatabaseNameFromWranglerConfig(wranglerConfig, wranglerEnv)
+    if (!d1Database) {
+        throw new Error('Missing D1 database name. Use --d1-database <name>, set MIGRATION_D1_DATABASE, or configure database_name in wrangler.toml.')
+    }
+
     return {
         source,
-        sqlitePath,
+        target,
+        d1Database,
+        d1Mode: hasCliFlag('--remote') || parseBooleanFlag(process.env.MIGRATION_D1_REMOTE) ? 'remote' : 'local',
+        wranglerConfig,
+        wranglerEnv,
         reset,
         force,
     }
@@ -115,12 +235,90 @@ function insertRecords(records: MigratableCounterRecord[], sqlitePath: string): 
     return records.length
 }
 
-export function runLeanCloudCounterMigration(options: CliOptions): MigrationSummary {
+function escapeSqlString(value: string): string {
+    return value.replace(/'/g, '\'\'')
+}
+
+export function buildD1ImportSql(records: MigratableCounterRecord[]): string {
+    const lines = [
+        'BEGIN TRANSACTION;',
+        ...counterSchemaStatements.map((statement) => `${statement};`),
+        'DELETE FROM counters;',
+    ]
+
+    for (const record of records) {
+        lines.push([
+            'INSERT INTO counters (object_id, title, url, time, created_at, updated_at)',
+            `VALUES ('${escapeSqlString(record.objectId)}', '${escapeSqlString(record.title)}', '${escapeSqlString(record.url)}', ${record.time}, '${escapeSqlString(record.createdAt)}', '${escapeSqlString(record.updatedAt)}');`,
+        ].join(' '))
+    }
+
+    lines.push('COMMIT;')
+    return lines.join('\n')
+}
+
+function resolveWranglerCliPath(): string {
+    const wranglerCliPath = path.resolve('node_modules/wrangler/bin/wrangler.js')
+    return wranglerCliPath
+}
+
+export function buildWranglerD1ExecuteArgs(options: D1CliOptions, sqlFilePath: string): string[] {
+    const args = [
+        resolveWranglerCliPath(),
+        'd1',
+        'execute',
+        options.d1Database,
+        `--${options.d1Mode}`,
+        '--file',
+        sqlFilePath,
+        '--config',
+        path.resolve(options.wranglerConfig),
+    ]
+    if (options.wranglerEnv) {
+        args.push('--env', options.wranglerEnv)
+    }
+    return args
+}
+
+function defaultCommandRunner(command: string, args: string[]): CommandRunnerResult {
+    const result = spawnSync(command, args, { stdio: 'inherit' })
+    return {
+        status: result.status,
+        error: result.error ?? undefined,
+        stderr: null,
+    }
+}
+
+function importRecordsToD1(records: MigratableCounterRecord[], options: D1CliOptions, commandRunner: CommandRunner): number {
+    const sql = buildD1ImportSql(records)
+    const tempDir = mkdtempSync(path.join(os.tmpdir(), 'hexo-counter-d1-migration-'))
+    const sqlFilePath = path.join(tempDir, 'counter-import.sql')
+    writeFileSync(sqlFilePath, sql, 'utf8')
+
+    try {
+        const result = commandRunner(process.execPath, buildWranglerD1ExecuteArgs(options, sqlFilePath))
+        if (result.error) {
+            throw result.error
+        }
+        if (result.status !== 0) {
+            const stderr = typeof result.stderr === 'string' ? result.stderr.trim() : ''
+            throw new Error(stderr ? `wrangler d1 execute failed: ${stderr}` : `wrangler d1 execute failed with exit code ${String(result.status)}`)
+        }
+    } finally {
+        rmSync(tempDir, { recursive: true, force: true })
+    }
+
+    return records.length
+}
+
+export function runLeanCloudCounterMigration(options: CliOptions, commandRunner: CommandRunner = defaultCommandRunner): MigrationSummary {
     assertDestructiveFlags(options)
 
     const content = readFileSync(options.source, 'utf8')
     const parsed = parseLeanCloudCounterJsonl(content)
-    const importedRows = insertRecords(parsed.records, options.sqlitePath)
+    const importedRows = options.target === 'd1'
+        ? importRecordsToD1(parsed.records, options, commandRunner)
+        : insertRecords(parsed.records, options.sqlitePath)
 
     return {
         ...parsed.summary,

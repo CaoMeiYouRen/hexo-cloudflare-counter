@@ -402,7 +402,7 @@ Repository 层建议至少提供以下抽象能力：
 
 1. 负责读取 JSONL、解析 Counter 记录、完成去重和导入。
 2. 负责输出导入总数、跳过数、重复数、失败数等摘要信息。
-3. 不负责迁移 LeanCloud ACL、用户体系、Class Schema 等非 Counter 数据。
+3. D1 路线优先通过 Wrangler CLI 执行 SQL 文件导入，而不是在脚本内直接拼接 Cloudflare REST API 调用。
 4. 不负责在线双写、断点续传或跨多数据库类型自动同步。
 
 ## 9. 运行时与部署设计
@@ -575,7 +575,7 @@ Repository 层建议至少提供以下抽象能力：
 
 当前阶段尚未完成的内容如下：
 
-1. 迁移脚本目前主要覆盖 SQLite 路线，尚未补齐 D1 或其他远程目标支持。
+1. 迁移脚本已经覆盖 SQLite 与 D1 路线，但尚未补齐增量导入、批量分片和失败恢复能力。
 2. `X-LC-Sign`、限流、防刷量等增强安全能力尚未实现。
 3. 面向 `hexo-leancloud-counter-security` 的部署期同步能力尚未实现。
 4. 自有 Hexo 插件尚未开始实现。

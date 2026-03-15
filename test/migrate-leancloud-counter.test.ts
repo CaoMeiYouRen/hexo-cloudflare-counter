@@ -1,10 +1,17 @@
 import { mkdtempSync, readFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import process from 'node:process'
 import Database from 'better-sqlite3'
 import { expect, test } from 'vitest'
 import { parseLeanCloudCounterJsonl } from '../packages/core/src/migration/leancloud-counter'
-import { isDirectScriptExecution, runLeanCloudCounterMigration } from '../scripts/migrate-leancloud-counter'
+import {
+    buildD1ImportSql,
+    buildWranglerD1ExecuteArgs,
+    extractD1DatabaseNameFromWranglerToml,
+    isDirectScriptExecution,
+    runLeanCloudCounterMigration,
+} from '../scripts/migrate-leancloud-counter'
 
 test('parseLeanCloudCounterJsonl deduplicates by url and keeps the latest updatedAt record', () => {
     const fixturePath = path.resolve('test/fixtures/leancloud-counter.jsonl')
@@ -75,4 +82,72 @@ test('isDirectScriptExecution matches Windows script path against import.meta st
         'file:///D:/hexo-cloudflare-counter/scripts/migrate-leancloud-counter.ts',
         'D:\\hexo-cloudflare-counter\\scripts\\migrate-leancloud-counter.ts',
     )).toBe(true)
+})
+
+test('extractD1DatabaseNameFromWranglerToml prefers env specific database and falls back to top level', () => {
+    const content = [
+        'name = "hexo-cloudflare-counter"',
+        '[[d1_databases]]',
+        'database_name = "prod-db"',
+        '[[env.dev.d1_databases]]',
+        'database_name = "dev-db"',
+    ].join('\n')
+
+    expect(extractD1DatabaseNameFromWranglerToml(content)).toBe('prod-db')
+    expect(extractD1DatabaseNameFromWranglerToml(content, 'dev')).toBe('dev-db')
+    expect(extractD1DatabaseNameFromWranglerToml(content, 'preview')).toBe('prod-db')
+})
+
+test('buildD1ImportSql creates transactional SQL for D1 import', () => {
+    const sql = buildD1ImportSql([
+        {
+            objectId: '65f0aabbccddee0011223345',
+            title: 'It\'s Hello',
+            url: '/posts/hello',
+            time: 2,
+            createdAt: '2024-01-02T00:00:00.000Z',
+            updatedAt: '2024-01-03T00:00:00.000Z',
+        },
+    ])
+
+    expect(sql).toContain('BEGIN TRANSACTION;')
+    expect(sql).toContain('DELETE FROM counters;')
+    expect(sql).toContain('It\'\'s Hello')
+    expect(sql).toContain('COMMIT;')
+})
+
+test('runLeanCloudCounterMigration invokes wrangler d1 execute for D1 target', () => {
+    const source = path.resolve('test/fixtures/leancloud-counter.jsonl')
+    let capturedCommand = ''
+    let capturedArgs: string[] = []
+    let capturedSql = ''
+
+    const summary = runLeanCloudCounterMigration({
+        source,
+        target: 'd1',
+        d1Database: 'hexo-cloudflare-counter',
+        d1Mode: 'remote',
+        wranglerConfig: 'wrangler.toml',
+        reset: true,
+        force: true,
+    }, (command, args) => {
+        capturedCommand = command
+        capturedArgs = args
+        const fileIndex = args.indexOf('--file')
+        capturedSql = readFileSync(args[fileIndex + 1], 'utf8')
+        return { status: 0 }
+    })
+
+    expect(summary.importedRows).toBe(2)
+    expect(capturedCommand).toBe(process.execPath)
+    expect(capturedArgs).toEqual(buildWranglerD1ExecuteArgs({
+        source,
+        target: 'd1',
+        d1Database: 'hexo-cloudflare-counter',
+        d1Mode: 'remote',
+        wranglerConfig: 'wrangler.toml',
+        reset: true,
+        force: true,
+    }, capturedArgs[capturedArgs.indexOf('--file') + 1]))
+    expect(capturedSql).toContain('INSERT INTO counters (object_id, title, url, time, created_at, updated_at)')
 })

@@ -104,18 +104,20 @@ pnpm run lint
 
 ## 迁移脚本
 
-当前已经提供 LeanCloud Counter JSONL 到 SQLite 的首版迁移脚本。
+当前已经提供 LeanCloud Counter JSONL 到 SQLite 和 Cloudflare D1 的迁移脚本。
 
 执行前请注意：
 
-1. 当前脚本是破坏性导入，执行时会清空目标 SQLite 数据库中的 `counters` 表。
+1. 当前脚本是破坏性导入，执行时会清空目标数据库中的 `counters` 表。
 2. 需要同时显式传入 `--reset` 和 `--force` 才会真正执行。
-3. 当前首版目标是 SQLite 路线，适合 Node.js / Docker 本地或自托管迁移。
+3. D1 路线不直接调用 Cloudflare REST API，而是通过项目内安装的 Wrangler CLI 执行 `wrangler d1 execute --file`。这样认证、账号上下文和 `--local` / `--remote` 切换都复用官方工具链。
+
+### 迁移到 SQLite
 
 示例：
 
 ```sh
-pnpm run migrate:leancloud -- --source ./exports/Counter.jsonl --sqlite-path ./data/counters.sqlite --reset --force
+pnpm run migrate:leancloud -- --source ./exports/Counter.jsonl --target sqlite --sqlite-path ./data/counters.sqlite --reset --force
 ```
 
 也可以通过环境变量执行：
@@ -127,6 +129,39 @@ MIGRATION_RESET=true \
 MIGRATION_FORCE=true \
 pnpm run migrate:leancloud
 ```
+
+### 迁移到 D1
+
+本地 D1：
+
+```sh
+pnpm run migrate:leancloud -- --source ./exports/Counter.jsonl --target d1 --d1-database hexo-cloudflare-counter --local --reset --force
+```
+
+远程 D1：
+
+```sh
+pnpm run migrate:leancloud -- --source ./exports/Counter.jsonl --target d1 --d1-database hexo-cloudflare-counter --remote --reset --force
+```
+
+也可以通过环境变量执行远程导入：
+
+```sh
+MIGRATION_SOURCE=./exports/Counter.jsonl \
+MIGRATION_TARGET=d1 \
+MIGRATION_D1_DATABASE=hexo-cloudflare-counter \
+MIGRATION_D1_REMOTE=true \
+MIGRATION_RESET=true \
+MIGRATION_FORCE=true \
+pnpm run migrate:leancloud
+```
+
+补充说明：
+
+1. 如果未传 `--d1-database`，脚本会尝试从 `wrangler.toml` 的 `database_name` 自动解析。
+2. 可以通过 `--wrangler-config <path>` 指定自定义 Wrangler 配置文件。
+3. 可以通过 `--wrangler-env <name>` 指定 Wrangler 环境，例如 `dev`。
+4. 远程 D1 导入前需要先完成 `wrangler login` 或配置好 `CLOUDFLARE_API_TOKEN` 等认证信息。
 
 ## 部署环境变量示例
 

@@ -28,7 +28,7 @@ test('D1CounterRepository initializes schema with prepared statements before que
             }
             return createPreparedStatement({ run: async () => undefined })
         },
-    } as D1DatabaseLike
+    } as unknown as D1DatabaseLike
 
     const repository = new D1CounterRepository(db)
 
