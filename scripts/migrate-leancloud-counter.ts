@@ -22,12 +22,25 @@ export interface MigrationSummary {
     importedRows: number
 }
 
+function toComparableFileUrl(filePathOrUrl: string): string {
+    if (filePathOrUrl.startsWith('file://')) {
+        return new URL(filePathOrUrl).href
+    }
+
+    if (/^[A-Za-z]:[\\/]/.test(filePathOrUrl)) {
+        const normalizedWindowsPath = filePathOrUrl.replace(/\\/g, '/')
+        return new URL(`file:///${normalizedWindowsPath}`).href
+    }
+
+    return pathToFileURL(path.resolve(filePathOrUrl)).href
+}
+
 export function isDirectScriptExecution(importMetaUrl: string, argvPath: string | undefined): boolean {
     if (!argvPath) {
         return false
     }
-    const normalizedArgvPath = path.resolve(argvPath)
-    return pathToFileURL(normalizedArgvPath).href === importMetaUrl
+
+    return toComparableFileUrl(argvPath) === toComparableFileUrl(importMetaUrl)
 }
 
 function parseBooleanFlag(value: string | undefined): boolean {
