@@ -241,7 +241,6 @@ function escapeSqlString(value: string): string {
 
 export function buildD1ImportSql(records: MigratableCounterRecord[]): string {
     const lines = [
-        'BEGIN TRANSACTION;',
         ...counterSchemaStatements.map((statement) => `${statement};`),
         'DELETE FROM counters;',
     ]
@@ -253,7 +252,6 @@ export function buildD1ImportSql(records: MigratableCounterRecord[]): string {
         ].join(' '))
     }
 
-    lines.push('COMMIT;')
     return lines.join('\n')
 }
 
@@ -268,6 +266,7 @@ export function buildWranglerD1ExecuteArgs(options: D1CliOptions, sqlFilePath: s
         'd1',
         'execute',
         options.d1Database,
+        '--yes',
         `--${options.d1Mode}`,
         '--file',
         sqlFilePath,

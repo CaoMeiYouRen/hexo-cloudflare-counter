@@ -98,7 +98,7 @@ test('extractD1DatabaseNameFromWranglerToml prefers env specific database and fa
     expect(extractD1DatabaseNameFromWranglerToml(content, 'preview')).toBe('prod-db')
 })
 
-test('buildD1ImportSql creates transactional SQL for D1 import', () => {
+test('buildD1ImportSql creates D1-compatible SQL import without explicit transaction statements', () => {
     const sql = buildD1ImportSql([
         {
             objectId: '65f0aabbccddee0011223345',
@@ -110,10 +110,10 @@ test('buildD1ImportSql creates transactional SQL for D1 import', () => {
         },
     ])
 
-    expect(sql).toContain('BEGIN TRANSACTION;')
     expect(sql).toContain('DELETE FROM counters;')
     expect(sql).toContain('It\'\'s Hello')
-    expect(sql).toContain('COMMIT;')
+    expect(sql).not.toContain('BEGIN TRANSACTION;')
+    expect(sql).not.toContain('COMMIT;')
 })
 
 test('runLeanCloudCounterMigration invokes wrangler d1 execute for D1 target', () => {
@@ -140,6 +140,7 @@ test('runLeanCloudCounterMigration invokes wrangler d1 execute for D1 target', (
 
     expect(summary.importedRows).toBe(2)
     expect(capturedCommand).toBe(process.execPath)
+    expect(capturedArgs).toContain('--yes')
     expect(capturedArgs).toEqual(buildWranglerD1ExecuteArgs({
         source,
         target: 'd1',
