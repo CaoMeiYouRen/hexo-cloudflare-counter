@@ -3,7 +3,7 @@ import path from 'node:path'
 import Database from 'better-sqlite3'
 import { generateObjectId, type CounterRepository, type CounterRecord, type CreateCounterInput } from '@hexo-cloudflare-counter/core'
 
-interface CounterRow {
+export interface CounterRow {
     object_id: string
     title: string
     url: string
@@ -16,13 +16,34 @@ function toTimestamp(): string {
     return new Date().toISOString()
 }
 
-function normalizePath(sqlitePath: string): string {
+export function normalizeSqlitePath(sqlitePath: string): string {
     if (sqlitePath === ':memory:') {
         return sqlitePath
     }
     const resolvedPath = path.resolve(sqlitePath)
     mkdirSync(path.dirname(resolvedPath), { recursive: true })
     return resolvedPath
+}
+
+export function ensureSqliteCounterSchema(db: Database.Database) {
+    db.pragma('journal_mode = WAL')
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS counters (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            object_id TEXT NOT NULL UNIQUE,
+            url TEXT NOT NULL UNIQUE,
+            title TEXT NOT NULL DEFAULT '',
+            time INTEGER NOT NULL DEFAULT 0 CHECK (time >= 0),
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_counters_object_id ON counters(object_id);
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_counters_url ON counters(url);
+    `)
+}
+
+export function openSqliteDatabase(sqlitePath: string): Database.Database {
+    return new Database(normalizeSqlitePath(sqlitePath))
 }
 
 function mapRow(row: CounterRow | undefined): CounterRecord | null {
@@ -48,21 +69,8 @@ export class SQLiteCounterRepository implements CounterRepository {
     private readonly db: Database.Database
 
     constructor(sqlitePath: string) {
-        this.db = new Database(normalizePath(sqlitePath))
-        this.db.pragma('journal_mode = WAL')
-        this.db.exec(`
-            CREATE TABLE IF NOT EXISTS counters (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                object_id TEXT NOT NULL UNIQUE,
-                url TEXT NOT NULL UNIQUE,
-                title TEXT NOT NULL DEFAULT '',
-                time INTEGER NOT NULL DEFAULT 0 CHECK (time >= 0),
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL
-            );
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_counters_object_id ON counters(object_id);
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_counters_url ON counters(url);
-        `)
+        this.db = openSqliteDatabase(sqlitePath)
+        ensureSqliteCounterSchema(this.db)
     }
 
     private findByUrlSync(url: string): CounterRecord | null {

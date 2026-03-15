@@ -1,3 +1,4 @@
+import type { D1Database } from '@cloudflare/workers-types'
 import type { CounterService } from './counter/service'
 
 export interface AppBindings {
@@ -11,7 +12,7 @@ export interface AppBindings {
     TIMEOUT: string
     MAX_BODY_SIZE: string
     BENCHMARKS_TEST: string
-    COUNTER_DB: unknown
+    COUNTER_DB: D1Database
 }
 
 declare module 'hono' {

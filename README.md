@@ -102,6 +102,89 @@ pnpm run lint
 3. Cloudflare Workers：`wrangler.toml` 开发环境入口是 `apps/server/src/cloudflare-workers.ts`，生产入口是 `dist/cloudflare-workers.mjs`。
 4. Vercel：当前通过 `api/index.js` 转发到 `dist/vercel.mjs`，但由于当前阶段没有外部数据库方案，不推荐作为生产落地路径。
 
+## 迁移脚本
+
+当前已经提供 LeanCloud Counter JSONL 到 SQLite 的首版迁移脚本。
+
+执行前请注意：
+
+1. 当前脚本是破坏性导入，执行时会清空目标 SQLite 数据库中的 `counters` 表。
+2. 需要同时显式传入 `--reset` 和 `--force` 才会真正执行。
+3. 当前首版目标是 SQLite 路线，适合 Node.js / Docker 本地或自托管迁移。
+
+示例：
+
+```sh
+pnpm run migrate:leancloud -- --source ./exports/Counter.jsonl --sqlite-path ./data/counters.sqlite --reset --force
+```
+
+也可以通过环境变量执行：
+
+```sh
+MIGRATION_SOURCE=./exports/Counter.jsonl \
+SQLITE_PATH=./data/counters.sqlite \
+MIGRATION_RESET=true \
+MIGRATION_FORCE=true \
+pnpm run migrate:leancloud
+```
+
+## 部署环境变量示例
+
+### Node.js 自托管
+
+```bash
+export NODE_ENV=production
+export PORT=3000
+export SQLITE_PATH=./data/counters.sqlite
+export APP_ID=your-app-id
+export APP_KEY=your-app-key
+export TIMEOUT=60000
+export MAX_BODY_SIZE=104857600
+
+pnpm run build
+node dist/index.mjs
+```
+
+### Docker
+
+```bash
+docker run --rm \
+  -p 3000:3000 \
+  -e NODE_ENV=production \
+  -e SQLITE_PATH=/app/data/counters.sqlite \
+  -e APP_ID=your-app-id \
+  -e APP_KEY=your-app-key \
+  -e TIMEOUT=60000 \
+  -e MAX_BODY_SIZE=104857600 \
+  -v $(pwd)/data:/app/data \
+  caomeiyouren/hexo-cloudflare-counter:latest
+```
+
+### Cloudflare Workers
+
+`wrangler.toml` 示例：
+
+```toml
+name = "hexo-cloudflare-counter"
+main = "dist/cloudflare-workers.mjs"
+compatibility_date = "2024-10-20"
+compatibility_flags = ["nodejs_compat"]
+assets = { directory = "public" }
+
+[vars]
+APP_ID = "your-app-id"
+APP_KEY = "your-app-key"
+TIMEOUT = 60000
+MAX_BODY_SIZE = 104857600
+
+[[d1_databases]]
+binding = "COUNTER_DB"
+database_name = "hexo-cloudflare-counter"
+database_id = "your-d1-database-id"
+```
+
+本地开发时可以继续使用 `wrangler.toml` 中的 `env.dev` 配置，并通过 `pnpm run dev:wrangler` 启动。
+
 当前设计和阶段状态见 `docs/plan.md` 与 `docs/todo.md`。
 
 ## 提交

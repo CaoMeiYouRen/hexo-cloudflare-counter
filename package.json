@@ -39,6 +39,7 @@
     "commit": "cz",
     "prepare": "husky",
     "test": "vitest run",
+    "migrate:leancloud": "tsx scripts/migrate-leancloud-counter.ts",
     "test:benchmarks": "tsx scripts/benchmarks.ts",
     "test:benchmarks:bun": "bun scripts/benchmarks.ts",
     "dev:vercel": "vercel dev",

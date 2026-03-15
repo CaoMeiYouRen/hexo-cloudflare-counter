@@ -1,0 +1,5 @@
+#filetype:JSON-streaming;version=1.0;class=Counter
+{"objectId":"65f0aabbccddee0011223344","title":"First","url":"/posts/hello","time":1,"createdAt":"2024-01-01T00:00:00.000Z","updatedAt":"2024-01-01T00:00:00.000Z"}
+{"objectId":"65f0aabbccddee0011223345","title":"Second","url":"/posts/world","time":2,"createdAt":"2024-01-02T00:00:00.000Z","updatedAt":"2024-01-02T00:00:00.000Z"}
+{"objectId":"65f0aabbccddee0011223399","title":"Hello Updated","url":"/posts/hello","time":5,"createdAt":"2024-01-01T00:00:00.000Z","updatedAt":"2024-01-03T00:00:00.000Z"}
+{"title":"Missing URL","time":8}

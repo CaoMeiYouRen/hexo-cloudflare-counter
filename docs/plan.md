@@ -571,10 +571,11 @@ Repository 层建议至少提供以下抽象能力：
 4. 已完成 D1 仓储实现，并已接入 Cloudflare Workers 路线。
 5. 已完成 ObjectId 风格的 24 位十六进制 `objectId` 生成逻辑。
 6. 已完成基础类型检查、lint、构建与最小集成测试。
+7. 已完成 LeanCloud Counter JSONL -> SQLite 首版迁移脚本，并补充基础测试样例。
 
 当前阶段尚未完成的内容如下：
 
-1. 旧 LeanCloud Counter JSONL 迁移脚本尚未实现。
+1. 迁移脚本目前主要覆盖 SQLite 路线，尚未补齐 D1 或其他远程目标支持。
 2. `X-LC-Sign`、限流、防刷量等增强安全能力尚未实现。
 3. 面向 `hexo-leancloud-counter-security` 的部署期同步能力尚未实现。
 4. 自有 Hexo 插件尚未开始实现。
