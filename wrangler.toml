@@ -7,15 +7,24 @@ compatibility_flags = ["nodejs_compat"]
 assets = { directory = "public" }
 
 [vars]
+# X-LC-Sign 允许的最大时间偏移窗口(ms)
+SIGN_MAX_AGE_MS = 300000
+# 写接口基础限流与短时去重
+RATE_LIMIT_MAX_WRITES = 60
+RATE_LIMIT_WINDOW_MS = 60000
+DEDUPE_WINDOW_MS = 15000
 # 超时时间(ms)
 TIMEOUT = 60000
-# 最大请求体大小(字节)，默认 100MB
-MAX_BODY_SIZE = 104857600
+# 最大请求体大小(字节)，默认 1 MiB
+MAX_BODY_SIZE = 1048576
 
 # 请替换为你自己设置的环境变量值
 # APP_ID = "your-app-id"
 
 # APP_KEY = "your-app-key"
+
+# 默认 CORS 放开；如果需要限制来源，再显式配置白名单
+# CORS_ALLOW_ORIGINS = "https://blog.example.com"
 
 [[d1_databases]]
 binding = "COUNTER_DB"

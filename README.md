@@ -38,12 +38,14 @@
 3. 已支持基于 `X-LC-Id` / `X-LC-Key` 的最小鉴权，对应服务端环境变量 `APP_ID` / `APP_KEY`。
 4. 已提供 `GET /healthz` 健康检查接口与 `GET /runtime` 运行时信息接口。
 5. 已提供基础版写接口限流与短时去重能力，用于降低高频重复提交带来的影响。
-6. 已支持基于来源白名单的 CORS 配置，默认只接受同源浏览器请求；跨域部署时需要显式配置允许来源。
-7. Node.js / Docker / Bun / 当前 Vercel 路线使用 SQLite 存储。
-8. Cloudflare Workers 路线使用 D1 存储。
-9. `objectId` 已切换为接近 MongoDB / LeanCloud 风格的 24 位十六进制字符串，而不是 UUID。
-10. 服务端通用装配、中间件与核心业务已经拆分到 workspace 结构中的 `apps/server` 与 `packages/core`。
-11. 当前已有类型检查、lint、构建、基础接口测试，以及 LeanCloud Counter JSONL -> SQLite / D1 迁移测试。
+6. 已支持 `X-LC-Sign` 与时间戳窗口校验，可作为 `X-LC-Key` 之外的兼容鉴权方式。
+7. 已支持基于来源白名单的 CORS 配置；默认行为是放开跨域，只有显式配置 `CORS_ALLOW_ORIGINS` 后才会按白名单限制来源。
+8. 默认最大请求体大小已收紧为 1 MiB，并且仍可通过 `MAX_BODY_SIZE` 配置覆盖。
+9. Node.js / Docker / Bun / 当前 Vercel 路线使用 SQLite 存储。
+10. Cloudflare Workers 路线使用 D1 存储。
+11. `objectId` 已切换为接近 MongoDB / LeanCloud 风格的 24 位十六进制字符串，而不是 UUID。
+12. 服务端通用装配、中间件与核心业务已经拆分到 workspace 结构中的 `apps/server` 与 `packages/core`。
+13. 当前已有类型检查、lint、构建、基础接口测试，以及 LeanCloud Counter JSONL -> SQLite / D1 迁移测试。
 
 ## 平台入口与最终运行文件
 
@@ -84,9 +86,10 @@
 补充说明：
 
 1. 当前代码已经兼容常见的 `leancloud_visitors` 查询、新建和自增调用。
-2. 当前还没有实现 `X-LC-Sign` 校验，所以如果你不是走额外的安全兼容层，`security` 需要先保持为 `false`。
-3. 如果服务端没有配置 `APP_ID` / `APP_KEY`，代码会放行请求；如果配置了，则请求头中的 `X-LC-Id` / `X-LC-Key` 必须匹配。
-4. 如果你的博客前端和本项目后端不是同源部署，当前需要额外配置 `CORS_ALLOW_ORIGINS`，把博客站点域名加入白名单。
+2. 当前已经支持 `X-LC-Sign: md5(timestamp + App Key),timestamp` 这一兼容签名格式，并支持通过 `SIGN_MAX_AGE_MS` 控制允许的时间偏移窗口。
+3. 如果服务端没有配置 `APP_ID` / `APP_KEY`，代码会放行请求；如果配置了，则请求头中的 `X-LC-Id` 必须匹配，并且客户端需要提供 `X-LC-Key` 或 `X-LC-Sign` 二选一。
+4. 当前默认 CORS 是放开的，保持“只改后端 API 地址即可接入”的直觉路径；如果你需要收紧浏览器跨域来源，再显式配置 `CORS_ALLOW_ORIGINS`。
+5. `hexo-leancloud-counter-security` 的完整部署期初始化工作流仍未实现，所以现阶段对现有 NexT / Hexo 用户，默认接入路径仍建议先保持 `security: false`。
 
 ### Hexo 配置示例
 
@@ -149,12 +152,12 @@ pnpm run lint
 1. 在服务端设置好 `APP_ID`、`APP_KEY`，并部署服务。
 2. 在 Hexo 或主题配置中，把 `leancloud_visitors.server_url` 改成部署后的服务地址。
 3. 保持 `leancloud_visitors.app_id`、`leancloud_visitors.app_key` 与服务端一致。
-4. 如果博客站点和后端服务不是同源部署，记得在服务端配置 `CORS_ALLOW_ORIGINS`，允许博客站点域名跨域访问。
-5. 当前若未实现额外安全签名，请保持 `leancloud_visitors.security: false`。
+4. 如果你需要启用更严格的浏览器来源限制，再在服务端配置 `CORS_ALLOW_ORIGINS`。
+5. 当前若仍沿用现有 NexT / Hexo 默认接法，建议先保持 `leancloud_visitors.security: false`；若你有自定义客户端，也可以改为发送 `X-LC-Sign`。
 
 这样前端请求仍然走原有 LeanCloud Counter 风格接口，但实际命中的已经是本项目提供的兼容后端。
 
-补充说明：当前限流与短时去重是服务端内存级的基础防护，目标是降低恶意高频提交的影响，而不是提供绝对防刷保证；在多实例部署下，它也不是全局一致的强约束。
+补充说明：当前限流与短时去重是服务端内存级的基础防护，目标是降低恶意高频提交的影响，而不是提供绝对防刷保证；在多实例部署下，它也不是全局一致的强约束。当前默认 CORS 为放开状态，只有在你显式配置 `CORS_ALLOW_ORIGINS` 后才会切换到来源白名单模式。
 
 ## 迁移脚本
 
@@ -230,15 +233,21 @@ export PORT=3000
 export SQLITE_PATH=./data/counters.sqlite
 export APP_ID=your-app-id
 export APP_KEY=your-app-key
-export CORS_ALLOW_ORIGINS=https://blog.example.com
 export RATE_LIMIT_MAX_WRITES=60
 export RATE_LIMIT_WINDOW_MS=60000
 export DEDUPE_WINDOW_MS=15000
+export SIGN_MAX_AGE_MS=300000
 export TIMEOUT=60000
-export MAX_BODY_SIZE=104857600
+export MAX_BODY_SIZE=1048576
 
 pnpm run build
 node dist/index.mjs
+```
+
+如果需要限制浏览器来源，再额外配置：
+
+```bash
+export CORS_ALLOW_ORIGINS=https://blog.example.com
 ```
 
 ### Docker
@@ -250,14 +259,20 @@ docker run --rm \
   -e SQLITE_PATH=/app/data/counters.sqlite \
   -e APP_ID=your-app-id \
   -e APP_KEY=your-app-key \
-  -e CORS_ALLOW_ORIGINS=https://blog.example.com \
   -e RATE_LIMIT_MAX_WRITES=60 \
   -e RATE_LIMIT_WINDOW_MS=60000 \
   -e DEDUPE_WINDOW_MS=15000 \
+  -e SIGN_MAX_AGE_MS=300000 \
   -e TIMEOUT=60000 \
-  -e MAX_BODY_SIZE=104857600 \
+  -e MAX_BODY_SIZE=1048576 \
   -v $(pwd)/data:/app/data \
   caomeiyouren/hexo-cloudflare-counter:latest
+```
+
+如果需要限制浏览器来源，再额外追加：
+
+```bash
+-e CORS_ALLOW_ORIGINS=https://blog.example.com
 ```
 
 ### Cloudflare Workers
@@ -274,17 +289,23 @@ assets = { directory = "public" }
 [vars]
 APP_ID = "your-app-id"
 APP_KEY = "your-app-key"
-CORS_ALLOW_ORIGINS = "https://blog.example.com"
 RATE_LIMIT_MAX_WRITES = "60"
 RATE_LIMIT_WINDOW_MS = "60000"
 DEDUPE_WINDOW_MS = "15000"
+SIGN_MAX_AGE_MS = "300000"
 TIMEOUT = 60000
-MAX_BODY_SIZE = 104857600
+MAX_BODY_SIZE = 1048576
 
 [[d1_databases]]
 binding = "COUNTER_DB"
 database_name = "hexo-cloudflare-counter"
 database_id = "your-d1-database-id"
+```
+
+如果需要限制浏览器来源，再在 `[vars]` 中额外添加：
+
+```toml
+CORS_ALLOW_ORIGINS = "https://blog.example.com"
 ```
 
 本地开发时可以继续使用 `wrangler.toml` 中的 `env.dev` 配置，并通过 `pnpm run dev:wrangler` 启动。
