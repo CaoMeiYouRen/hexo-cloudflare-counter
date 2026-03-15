@@ -10,7 +10,10 @@ FROM nodejs AS builder
 
 WORKDIR /app
 
-COPY package.json .npmrc pnpm-lock.yaml /app/
+COPY package.json .npmrc pnpm-lock.yaml pnpm-workspace.yaml /app/
+COPY patches /app/patches
+COPY apps/server/package.json /app/apps/server/package.json
+COPY packages/core/package.json /app/packages/core/package.json
 
 RUN pnpm i --frozen-lockfile
 
@@ -36,7 +39,7 @@ RUN export PROJECT_ROOT=/app/ && \
 # 阶段三：生产阶段
 FROM runtime
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 WORKDIR /app
 
