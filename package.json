@@ -31,7 +31,7 @@
     "prebuild": "rimraf dist",
     "build": "cross-env NODE_ENV=production tsdown",
     "dev": "cross-env NODE_ENV=development tsx watch apps/server/src/index.ts",
-    "dev:tsup": "cross-env NODE_ENV=development tsdown --watch",
+    "dev:tsdown": "cross-env NODE_ENV=development tsdown --watch",
     "start": "node ./dist/index.mjs",
     "start:tsx": "cross-env NODE_ENV=production tsx apps/server/src/index.ts",
     "start:benchmarks": "cross-env NODE_ENV=test BENCHMARKS_TEST=true node dist/index.mjs",
