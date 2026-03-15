@@ -20,7 +20,7 @@
 </p>
 
 
-> 基于 Cloudflare Workers 和 D1 的 hexo 阅读量统计插件。也支持部署到 Vercel/Docker 等平台。兼容 leancloud-counter
+> 兼容 LeanCloud Counter API 的 Hexo 阅读量统计后端服务，支持 Cloudflare Workers、Docker 和 Node.js 自托管，内置 D1/SQLite 存储方案。
 
 ## 🏠 主页
 

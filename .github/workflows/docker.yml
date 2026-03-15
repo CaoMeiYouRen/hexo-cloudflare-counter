@@ -88,4 +88,4 @@ jobs:
           user: ${{ secrets.DOCKER_USERNAME }}
           pass: ${{ secrets.DOCKER_PASSWORD }}
           slug: ${{ github.repository }}
-          description: "基于Cloudflare Workers的hexo阅读量统计插件"
+          description: "兼容 LeanCloud Counter API 的 Hexo 阅读量统计后端服务"
