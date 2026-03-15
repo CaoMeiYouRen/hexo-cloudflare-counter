@@ -18,7 +18,7 @@ overrides:
 
 patchedDependencies:
   read-yaml-file@1.1.0:
-    hash: c137a1cc3fcdc7a99531d8db8755f335784847e734ea420c612ccf26fedbaa17
+    hash: b50d14cd34232b0c0851e09eb2248e756cc6ac6f61ef8f90c3070072ec0284a6
     path: patches/read-yaml-file@1.1.0.patch
 
 importers:
@@ -6511,7 +6511,7 @@ snapshots:
       '@manypkg/find-root': 1.1.0
       fs-extra: 8.1.0
       globby: 11.1.0
-      read-yaml-file: 1.1.0(patch_hash=c137a1cc3fcdc7a99531d8db8755f335784847e734ea420c612ccf26fedbaa17)
+      read-yaml-file: 1.1.0(patch_hash=b50d14cd34232b0c0851e09eb2248e756cc6ac6f61ef8f90c3070072ec0284a6)
 
   '@mapbox/node-pre-gyp@2.0.3':
     dependencies:
@@ -10641,7 +10641,7 @@ snapshots:
       type-fest: 4.41.0
       unicorn-magic: 0.1.0
 
-  read-yaml-file@1.1.0(patch_hash=c137a1cc3fcdc7a99531d8db8755f335784847e734ea420c612ccf26fedbaa17):
+  read-yaml-file@1.1.0(patch_hash=b50d14cd34232b0c0851e09eb2248e756cc6ac6f61ef8f90c3070072ec0284a6):
     dependencies:
       graceful-fs: 4.2.11
       js-yaml: 4.1.1
