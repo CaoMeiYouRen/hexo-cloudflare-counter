@@ -14,6 +14,11 @@ export type D1PreparedStatementLike = D1PreparedStatement
 export type D1DatabaseLike = D1Database
 
 const initializedDatabases = new WeakMap<object, Promise<void>>()
+const schemaStatements = [
+    'CREATE TABLE IF NOT EXISTS counters (id INTEGER PRIMARY KEY AUTOINCREMENT, object_id TEXT NOT NULL UNIQUE, url TEXT NOT NULL UNIQUE, title TEXT NOT NULL DEFAULT \'\', time INTEGER NOT NULL DEFAULT 0 CHECK (time >= 0), created_at TEXT NOT NULL, updated_at TEXT NOT NULL)',
+    'CREATE UNIQUE INDEX IF NOT EXISTS idx_counters_object_id ON counters(object_id)',
+    'CREATE UNIQUE INDEX IF NOT EXISTS idx_counters_url ON counters(url)',
+] as const
 
 function toTimestamp(): string {
     return new Date().toISOString()
@@ -45,19 +50,9 @@ export class D1CounterRepository implements CounterRepository {
         }
 
         const initPromise = (async () => {
-            await this.db.exec(`
-                CREATE TABLE IF NOT EXISTS counters (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    object_id TEXT NOT NULL UNIQUE,
-                    url TEXT NOT NULL UNIQUE,
-                    title TEXT NOT NULL DEFAULT '',
-                    time INTEGER NOT NULL DEFAULT 0 CHECK (time >= 0),
-                    created_at TEXT NOT NULL,
-                    updated_at TEXT NOT NULL
-                );
-            `)
-            await this.db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_counters_object_id ON counters(object_id);')
-            await this.db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_counters_url ON counters(url);')
+            for (const statement of schemaStatements) {
+                await this.db.prepare(statement).run()
+            }
         })()
 
         initializedDatabases.set(cacheKey, initPromise)
