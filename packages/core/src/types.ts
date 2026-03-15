@@ -8,6 +8,12 @@ export interface AppBindings {
     LOG_LEVEL: string
     APP_ID: string
     APP_KEY: string
+    CORS_ALLOW_ORIGIN: string
+    CORS_ALLOW_ORIGINS: string
+    RATE_LIMIT_MAX_WRITES: string
+    RATE_LIMIT_WINDOW_MS: string
+    DEDUPE_WINDOW_MS: string
+    SIGN_MAX_AGE_MS: string
     SQLITE_PATH: string
     TIMEOUT: string
     MAX_BODY_SIZE: string
@@ -19,6 +25,7 @@ declare module 'hono' {
     interface ContextVariableMap {
         appId: string
         appKey: string
+        signMaxAgeMs: number
         counterService: CounterService
     }
 }

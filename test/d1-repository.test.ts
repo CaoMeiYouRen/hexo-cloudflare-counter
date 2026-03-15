@@ -7,26 +7,21 @@ function createPreparedStatement<T>(handlers: {
 }): D1PreparedStatementLike {
     return {
         bind: () => createPreparedStatement(handlers),
-        first: async () => handlers.first?.() ?? null,
-        run: async () => {
-            await handlers.run?.()
-            return {} as Awaited<ReturnType<D1PreparedStatementLike['run']>>
-        },
+        first: () => Promise.resolve(handlers.first?.()).then((value) => value ?? null),
+        run: () => Promise.resolve(handlers.run?.()).then(() => ({} as Awaited<ReturnType<D1PreparedStatementLike['run']>>)),
     } as D1PreparedStatementLike
 }
 
 test('D1CounterRepository initializes schema with prepared statements before querying', async () => {
     const preparedSql: string[] = []
     const db = {
-        exec: async () => {
-            throw new Error('exec should not be used for schema initialization')
-        },
+        exec: () => Promise.reject(new Error('exec should not be used for schema initialization')),
         prepare: (sql: string) => {
             preparedSql.push(sql)
             if (sql.startsWith('SELECT object_id')) {
-                return createPreparedStatement({ first: async () => null })
+                return createPreparedStatement({ first: () => Promise.resolve(null) })
             }
-            return createPreparedStatement({ run: async () => undefined })
+            return createPreparedStatement({ run: () => Promise.resolve() })
         },
     } as unknown as D1DatabaseLike
 

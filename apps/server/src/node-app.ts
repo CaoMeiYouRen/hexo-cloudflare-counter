@@ -1,11 +1,16 @@
 import { CounterService } from '@hexo-cloudflare-counter/core'
 import { createApp } from './app'
 import { SQLiteCounterRepository } from './repositories/sqlite'
+import type { WriteSecurityOptions } from './security/write-guard'
 
 interface NodeAppOptions {
     sqlitePath?: string
     appId?: string
     appKey?: string
+    signMaxAgeMs?: number
+    maxBodySize?: number
+    corsAllowOrigins?: string[]
+    writeSecurity?: WriteSecurityOptions
 }
 
 const servicesByPath = new Map<string, CounterService>()
@@ -36,6 +41,10 @@ export function createNodeApp(options: NodeAppOptions = {}) {
     return createApp({
         appId: options.appId,
         appKey: options.appKey,
+        signMaxAgeMs: options.signMaxAgeMs,
+        maxBodySize: options.maxBodySize,
+        corsAllowOrigins: options.corsAllowOrigins,
+        writeSecurity: options.writeSecurity,
         resolveCounterService: () => requestScopedCounterService ?? getNodeCounterService(sqlitePath),
     })
 }

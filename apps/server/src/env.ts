@@ -10,7 +10,7 @@ const result = dotenv.config({
 const envObj = result.parsed
 
 if (process.env.NODE_ENV === 'development') {
-    console.log('envObj', envObj)
+    console.log('env loaded', envObj ? Object.keys(envObj) : [])
 }
 
 export const __PROD__ = process.env.NODE_ENV === 'production'

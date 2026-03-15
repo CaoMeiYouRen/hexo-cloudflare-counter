@@ -12,6 +12,10 @@ export class CounterService {
         return this.repository.findByUrls(urls)
     }
 
+    async findByObjectId(objectId: string): Promise<CounterRecord | null> {
+        return this.repository.findByObjectId(objectId)
+    }
+
     async createCounter(input: CreateCounterInput): Promise<CounterRecord> {
         if (!input.url) {
             throw new HTTPException(400, { message: 'url is required' })

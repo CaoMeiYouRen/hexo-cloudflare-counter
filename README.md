@@ -37,11 +37,13 @@
 2. `GET /1.1/classes/Counter` 已支持单个 `url` 查询与 `url.$in` 批量查询。
 3. 已支持基于 `X-LC-Id` / `X-LC-Key` 的最小鉴权，对应服务端环境变量 `APP_ID` / `APP_KEY`。
 4. 已提供 `GET /healthz` 健康检查接口与 `GET /runtime` 运行时信息接口。
-5. Node.js / Docker / Bun / 当前 Vercel 路线使用 SQLite 存储。
-6. Cloudflare Workers 路线使用 D1 存储。
-7. `objectId` 已切换为接近 MongoDB / LeanCloud 风格的 24 位十六进制字符串，而不是 UUID。
-8. 服务端通用装配、中间件与核心业务已经拆分到 workspace 结构中的 `apps/server` 与 `packages/core`。
-9. 当前已有类型检查、lint、构建、基础接口测试，以及 LeanCloud Counter JSONL -> SQLite / D1 迁移测试。
+5. 已提供基础版写接口限流与短时去重能力，用于降低高频重复提交带来的影响。
+6. 已支持基于来源白名单的 CORS 配置，默认只接受同源浏览器请求；跨域部署时需要显式配置允许来源。
+7. Node.js / Docker / Bun / 当前 Vercel 路线使用 SQLite 存储。
+8. Cloudflare Workers 路线使用 D1 存储。
+9. `objectId` 已切换为接近 MongoDB / LeanCloud 风格的 24 位十六进制字符串，而不是 UUID。
+10. 服务端通用装配、中间件与核心业务已经拆分到 workspace 结构中的 `apps/server` 与 `packages/core`。
+11. 当前已有类型检查、lint、构建、基础接口测试，以及 LeanCloud Counter JSONL -> SQLite / D1 迁移测试。
 
 ## 平台入口与最终运行文件
 
@@ -84,6 +86,7 @@
 1. 当前代码已经兼容常见的 `leancloud_visitors` 查询、新建和自增调用。
 2. 当前还没有实现 `X-LC-Sign` 校验，所以如果你不是走额外的安全兼容层，`security` 需要先保持为 `false`。
 3. 如果服务端没有配置 `APP_ID` / `APP_KEY`，代码会放行请求；如果配置了，则请求头中的 `X-LC-Id` / `X-LC-Key` 必须匹配。
+4. 如果你的博客前端和本项目后端不是同源部署，当前需要额外配置 `CORS_ALLOW_ORIGINS`，把博客站点域名加入白名单。
 
 ### Hexo 配置示例
 
@@ -146,9 +149,12 @@ pnpm run lint
 1. 在服务端设置好 `APP_ID`、`APP_KEY`，并部署服务。
 2. 在 Hexo 或主题配置中，把 `leancloud_visitors.server_url` 改成部署后的服务地址。
 3. 保持 `leancloud_visitors.app_id`、`leancloud_visitors.app_key` 与服务端一致。
-4. 当前若未实现额外安全签名，请保持 `leancloud_visitors.security: false`。
+4. 如果博客站点和后端服务不是同源部署，记得在服务端配置 `CORS_ALLOW_ORIGINS`，允许博客站点域名跨域访问。
+5. 当前若未实现额外安全签名，请保持 `leancloud_visitors.security: false`。
 
 这样前端请求仍然走原有 LeanCloud Counter 风格接口，但实际命中的已经是本项目提供的兼容后端。
+
+补充说明：当前限流与短时去重是服务端内存级的基础防护，目标是降低恶意高频提交的影响，而不是提供绝对防刷保证；在多实例部署下，它也不是全局一致的强约束。
 
 ## 迁移脚本
 
@@ -224,6 +230,10 @@ export PORT=3000
 export SQLITE_PATH=./data/counters.sqlite
 export APP_ID=your-app-id
 export APP_KEY=your-app-key
+export CORS_ALLOW_ORIGINS=https://blog.example.com
+export RATE_LIMIT_MAX_WRITES=60
+export RATE_LIMIT_WINDOW_MS=60000
+export DEDUPE_WINDOW_MS=15000
 export TIMEOUT=60000
 export MAX_BODY_SIZE=104857600
 
@@ -240,6 +250,10 @@ docker run --rm \
   -e SQLITE_PATH=/app/data/counters.sqlite \
   -e APP_ID=your-app-id \
   -e APP_KEY=your-app-key \
+  -e CORS_ALLOW_ORIGINS=https://blog.example.com \
+  -e RATE_LIMIT_MAX_WRITES=60 \
+  -e RATE_LIMIT_WINDOW_MS=60000 \
+  -e DEDUPE_WINDOW_MS=15000 \
   -e TIMEOUT=60000 \
   -e MAX_BODY_SIZE=104857600 \
   -v $(pwd)/data:/app/data \
@@ -260,6 +274,10 @@ assets = { directory = "public" }
 [vars]
 APP_ID = "your-app-id"
 APP_KEY = "your-app-key"
+CORS_ALLOW_ORIGINS = "https://blog.example.com"
+RATE_LIMIT_MAX_WRITES = "60"
+RATE_LIMIT_WINDOW_MS = "60000"
+DEDUPE_WINDOW_MS = "15000"
 TIMEOUT = 60000
 MAX_BODY_SIZE = 104857600
 
