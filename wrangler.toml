@@ -12,6 +12,17 @@ TIMEOUT = 60000
 # 最大请求体大小(字节)，默认 100MB
 MAX_BODY_SIZE = 104857600
 
+# 请替换为你自己设置的环境变量值
+# APP_ID = "your-app-id"
+
+# APP_KEY = "your-app-key"
+
+[[d1_databases]]
+binding = "COUNTER_DB"
+database_name = "hexo-cloudflare-counter"
+# 请替换为你的 D1 数据库 ID，可以在 Cloudflare Dashboard 的 D1 数据库详情页找到
+database_id = "d21d93d2-f122-4ad9-b2b0-cea4c37165d1"
+
 [env.dev]
 # Development 环境配置
 main = "apps/server/src/cloudflare-workers.ts"
