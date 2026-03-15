@@ -4,7 +4,7 @@ import path from 'node:path'
 import Database from 'better-sqlite3'
 import { expect, test } from 'vitest'
 import { parseLeanCloudCounterJsonl } from '../packages/core/src/migration/leancloud-counter'
-import { runLeanCloudCounterMigration } from '../scripts/migrate-leancloud-counter'
+import { isDirectScriptExecution, runLeanCloudCounterMigration } from '../scripts/migrate-leancloud-counter'
 
 test('parseLeanCloudCounterJsonl deduplicates by url and keeps the latest updatedAt record', () => {
     const fixturePath = path.resolve('test/fixtures/leancloud-counter.jsonl')
@@ -68,4 +68,11 @@ test('runLeanCloudCounterMigration imports JSONL records into SQLite', () => {
         },
     ])
     db.close()
+})
+
+test('isDirectScriptExecution matches Windows script path against import.meta style file URL', () => {
+    expect(isDirectScriptExecution(
+        'file:///D:/hexo-cloudflare-counter/scripts/migrate-leancloud-counter.ts',
+        'D:\\hexo-cloudflare-counter\\scripts\\migrate-leancloud-counter.ts',
+    )).toBe(true)
 })

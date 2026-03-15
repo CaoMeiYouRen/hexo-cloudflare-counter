@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs'
+import path from 'node:path'
 import process from 'node:process'
+import { pathToFileURL } from 'node:url'
 import { parseLeanCloudCounterJsonl, type MigratableCounterRecord } from '@hexo-cloudflare-counter/core'
 import { ensureSqliteCounterSchema, openSqliteDatabase } from '../apps/server/src/repositories/sqlite'
 
@@ -18,6 +20,14 @@ export interface MigrationSummary {
     metadataLines: number
     blankLines: number
     importedRows: number
+}
+
+export function isDirectScriptExecution(importMetaUrl: string, argvPath: string | undefined): boolean {
+    if (!argvPath) {
+        return false
+    }
+    const normalizedArgvPath = path.resolve(argvPath)
+    return pathToFileURL(normalizedArgvPath).href === importMetaUrl
 }
 
 function parseBooleanFlag(value: string | undefined): boolean {
@@ -116,7 +126,13 @@ function printSummary(summary: MigrationSummary) {
     console.log(`Imported rows: ${summary.importedRows}`)
 }
 
-if (import.meta.url === `file://${process.argv[1]?.replaceAll('\\', '/')}`) {
-    const summary = runLeanCloudCounterMigration(parseCliOptions())
-    printSummary(summary)
+if (isDirectScriptExecution(import.meta.url, process.argv[1])) {
+    try {
+        const summary = runLeanCloudCounterMigration(parseCliOptions())
+        printSummary(summary)
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        console.error(`LeanCloud Counter migration failed: ${message}`)
+        process.exitCode = 1
+    }
 }

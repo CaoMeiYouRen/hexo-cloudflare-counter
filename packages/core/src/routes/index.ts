@@ -1,4 +1,3 @@
-import { env } from 'hono/adapter'
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import type { MiddlewareHandler } from 'hono/types'
@@ -34,9 +33,8 @@ function parseWhere(rawWhere: string | undefined): { url?: string, urls?: string
 }
 
 const verifyAppCredentials: MiddlewareHandler<{ Bindings: AppBindings }> = async (c, next) => {
-    const runtimeEnv = env(c)
-    const appId = runtimeEnv.APP_ID || c.get('appId') || ''
-    const appKey = runtimeEnv.APP_KEY || c.get('appKey') || ''
+    const appId = c.get('appId') || ''
+    const appKey = c.get('appKey') || ''
 
     if (!appId && !appKey) {
         await next()

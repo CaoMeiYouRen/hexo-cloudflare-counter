@@ -4,8 +4,8 @@ import { createNodeApp } from '../apps/server/src/node-app'
 function createTestApp(options: { appId?: string, appKey?: string } = {}) {
     return createNodeApp({
         sqlitePath: ':memory:',
-        appId: options.appId,
-        appKey: options.appKey,
+        appId: options.appId ?? '',
+        appKey: options.appKey ?? '',
     })
 }
 
