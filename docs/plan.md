@@ -2,7 +2,7 @@
 
 ## 1. 项目背景
 
-LeanCloud 相关服务逐步停服后，原有基于 LeanCloud 的 Hexo 阅读量方案难以继续使用。大量站点仍依赖 hexo-leancloud-counter、hexo-leancloud-counter-security 及其生态中的模板代码，因此本项目的核心目标不是重新定义一套全新协议，而是以最小迁移成本提供一个可持续维护的后端与前端方案。
+LeanCloud 相关服务逐步停服后，原有基于 LeanCloud 的 Hexo 阅读量方案难以继续使用。大量站点仍依赖 hexo-leancloud-counter、[hexo-leancloud-counter-security](https://github.com/theme-next/hexo-leancloud-counter-security) 及其生态中的模板代码，因此本项目的核心目标不是重新定义一套全新协议，而是以最小迁移成本提供一个可持续维护的后端与前端方案。
 
 本项目计划使用 Cloudflare D1 作为首选后端存储，同时优先补齐本地 SQLite 实现，以支持不同部署环境。在运行时层面，项目第一阶段聚焦 Cloudflare Workers 与 Docker/普通 Node.js 自托管；Vercel 由于生产场景不适合直接依赖本地 SQLite，暂不作为当前阶段交付目标，后续如需支持，应结合 PostgreSQL、MySQL 等外部数据库重新设计。项目还可额外提供一个自有 Hexo 插件，降低对陈旧前端插件的依赖。
 
