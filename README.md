@@ -7,7 +7,7 @@
   <a href="https://github.com/CaoMeiYouRen/hexo-cloudflare-counter/actions?query=workflow%3ARelease" target="_blank">
     <img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/CaoMeiYouRen/hexo-cloudflare-counter/release.yml?branch=master">
   </a>
-  <img src="https://img.shields.io/badge/node-%3E%3D16-blue.svg" />
+  <img src="https://img.shields.io/badge/node-%3E%3D18-blue.svg" />
   <a href="https://github.com/CaoMeiYouRen/hexo-cloudflare-counter#readme" target="_blank">
     <img alt="Documentation" src="https://img.shields.io/badge/documentation-yes-brightgreen.svg" />
   </a>
@@ -33,12 +33,15 @@
 
 ## 当前已实现内容
 
-1. LeanCloud Counter 最小兼容接口：`GET /1.1/classes/Counter`、`POST /1.1/classes/Counter`、`PUT /1.1/classes/Counter/:objectId`。
-2. Node.js / Docker 使用 SQLite 存储。
-3. Cloudflare Workers 使用 D1 存储。
-4. `objectId` 已切换为接近 MongoDB / LeanCloud 风格的 24 位十六进制字符串，而不是 UUID。
-5. 已完成 workspace 形态下的 core 与 server 拆分。
-6. 当前已有类型检查、lint、构建与基础接口测试。
+1. LeanCloud Counter 最小兼容接口已经可用：`GET /1.1/classes/Counter`、`POST /1.1/classes/Counter`、`PUT /1.1/classes/Counter/:objectId`。
+2. `GET /1.1/classes/Counter` 已支持单个 `url` 查询与 `url.$in` 批量查询。
+3. 已支持基于 `X-LC-Id` / `X-LC-Key` 的最小鉴权，对应服务端环境变量 `APP_ID` / `APP_KEY`。
+4. 已提供 `GET /healthz` 健康检查接口与 `GET /runtime` 运行时信息接口。
+5. Node.js / Docker / Bun / 当前 Vercel 路线使用 SQLite 存储。
+6. Cloudflare Workers 路线使用 D1 存储。
+7. `objectId` 已切换为接近 MongoDB / LeanCloud 风格的 24 位十六进制字符串，而不是 UUID。
+8. 服务端通用装配、中间件与核心业务已经拆分到 workspace 结构中的 `apps/server` 与 `packages/core`。
+9. 当前已有类型检查、lint、构建、基础接口测试，以及 LeanCloud Counter JSONL -> SQLite / D1 迁移测试。
 
 ## 平台入口与最终运行文件
 
@@ -63,6 +66,42 @@
 ## 依赖要求
 
 1. Node.js >= 18
+
+## 兼容接入说明
+
+这个项目本质上是一个**兼容旧 LeanCloud Counter 接口的后端服务**，不是要求你重写 Hexo 前端模板的全新协议。
+
+对已经在使用 `hexo-leancloud-counter`、 `leancloud_visitors` 或其他兼容 LeanCloud Counter 调用方式的站点来说，当前迁移的核心点是：
+
+1. 先部署本项目后端服务。
+2. 把 Hexo 或主题配置中的 `server_url` 改成你部署出来的服务地址。
+3. `app_id` 和 `app_key` 保持与后端配置的 `APP_ID`、`APP_KEY` 一致。
+
+也就是说，**当前阶段最重要的接入变化就是 `server_url` 必填**。因为请求不再发往 LeanCloud 官方服务，而是发往你部署的这个兼容后端。
+
+补充说明：
+
+1. 当前代码已经兼容常见的 `leancloud_visitors` 查询、新建和自增调用。
+2. 当前还没有实现 `X-LC-Sign` 校验，所以如果你不是走额外的安全兼容层，`security` 需要先保持为 `false`。
+3. 如果服务端没有配置 `APP_ID` / `APP_KEY`，代码会放行请求；如果配置了，则请求头中的 `X-LC-Id` / `X-LC-Key` 必须匹配。
+
+### Hexo 配置示例
+
+下面给出一个现有 Hexo / NexT 项目可直接参考的 `_config.yml` 配置片段：
+
+```yaml
+leancloud_visitors:
+  enable: true
+  app_id: xxxxxxxxxxxxx # <your app id>
+  app_key: xxxxxxxxxxxxx # <your app key>
+  server_url: https://counter.example.com # 必填，改成你部署的本项目后端地址
+  # Dependencies: https://github.com/theme-next/hexo-leancloud-counter-security
+  # If you don't care about security in leancloud counter and just want to use it directly
+  # (without hexo-leancloud-counter-security plugin), set `security` to `false`.
+  security: false
+```
+
+如果你之前已经在主题里启用了 `leancloud_visitors`，通常不需要改模板逻辑，优先只改这里的 `server_url` 即可。
 
 ## 安装
 
@@ -102,15 +141,27 @@ pnpm run lint
 3. Cloudflare Workers：`wrangler.toml` 开发环境入口是 `apps/server/src/cloudflare-workers.ts`，生产入口是 `dist/cloudflare-workers.mjs`。
 4. Vercel：当前通过 `api/index.js` 转发到 `dist/vercel.mjs`，但由于当前阶段没有外部数据库方案，不推荐作为生产落地路径。
 
+## 部署后如何接到现有 Hexo 站点
+
+1. 在服务端设置好 `APP_ID`、`APP_KEY`，并部署服务。
+2. 在 Hexo 或主题配置中，把 `leancloud_visitors.server_url` 改成部署后的服务地址。
+3. 保持 `leancloud_visitors.app_id`、`leancloud_visitors.app_key` 与服务端一致。
+4. 当前若未实现额外安全签名，请保持 `leancloud_visitors.security: false`。
+
+这样前端请求仍然走原有 LeanCloud Counter 风格接口，但实际命中的已经是本项目提供的兼容后端。
+
 ## 迁移脚本
 
 当前已经提供 LeanCloud Counter JSONL 到 SQLite 和 Cloudflare D1 的迁移脚本。
+
+其中 `Counter.jsonl` 这类迁移源文件，需要你自行从 LeanCloud 后台导出获得。这个项目只负责消费已经导出的数据文件，不负责替你从 LeanCloud 在线拉取历史数据。
 
 执行前请注意：
 
 1. 当前脚本是破坏性导入，执行时会清空目标数据库中的 `counters` 表。
 2. 需要同时显式传入 `--reset` 和 `--force` 才会真正执行。
 3. D1 路线不直接调用 Cloudflare REST API，而是通过项目内安装的 Wrangler CLI 执行 `wrangler d1 execute --file`。这样认证、账号上下文和 `--local` / `--remote` 切换都复用官方工具链。
+4. 如果 LeanCloud 后台后续停运，你将无法再从后台导出这些历史 Counter 数据；因此如果你还在使用 LeanCloud Counter，建议尽快把相关数据导出并妥善备份。
 
 ### 迁移到 SQLite
 
