@@ -1,16 +1,25 @@
-name: Release Service
+name: Release Packages
+
 on:
   push:
     branches:
       - master
-  workflow_dispatch:
-# 仅针对当前工作流正在进行的作业或运行
+    paths:
+      - .changeset/**
+      - packages/**
+      - apps/**
+      - pnpm-workspace.yaml
+      - package.json
+      - pnpm-lock.yaml
+      - .github/workflows/release-packages.yml
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false # Release 作业不取消，因为要确保版本发布成功
+  cancel-in-progress: false
+
 jobs:
-  release:
-    name: Release Service
+  release-packages:
+    name: Release Packages
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -23,7 +32,6 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          persist-credentials: false
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -37,6 +45,12 @@ jobs:
       - run: pnpm run lint
       - run: pnpm run build
       - run: pnpm run test
-      - env:
+      - name: Create Version PR or Publish Packages
+        uses: changesets/action@v1
+        with:
+          version: pnpm run version:packages
+          publish: pnpm run release:packages
+          title: "chore: version packages"
+          commit: "chore: version packages"
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm run release:service
