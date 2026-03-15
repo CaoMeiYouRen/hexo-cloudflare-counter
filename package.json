@@ -141,6 +141,9 @@
       "path-to-regexp": "^6.3.0",
       "tmp": "^0.2.4"
     },
+    "patchedDependencies": {
+      "read-yaml-file@1.1.0": "patches/read-yaml-file@1.1.0.patch"
+    },
     "onlyBuiltDependencies": [
       "better-sqlite3",
       "esbuild",
