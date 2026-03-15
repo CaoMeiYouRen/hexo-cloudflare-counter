@@ -30,8 +30,6 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -45,12 +43,12 @@ jobs:
       - run: pnpm run lint
       - run: pnpm run build
       - run: pnpm run test
-      # - name: Create Version PR or Publish Packages
-      #   uses: changesets/action@v1
-      #   with:
-      #     version: pnpm run version:packages
-      #     publish: pnpm run release:packages
-      #     title: "chore: version packages"
-      #     commit: "chore: version packages"
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Version PR or Publish Packages
+        uses: changesets/action@v1
+        with:
+          version: pnpm run version:packages
+          publish: pnpm run release:packages
+          title: "chore: version packages"
+          commit: "chore: version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
