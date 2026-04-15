@@ -21,6 +21,7 @@
   "engines": {
     "node": ">=18"
   },
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "release": "pnpm run release:service",
     "release:service": "semantic-release",
@@ -132,6 +133,7 @@
     "overrides": {
       "compare-func": "^2.0.0",
       "js-yaml": "4.1.1",
+      "@manypkg/get-packages": "2.2.2",
       "tar": "7.5.2",
       "form-data": "^4.0.4",
       "@conventional-changelog/git-client": "^2.5.1",
@@ -140,9 +142,6 @@
       "esbuild": "^0.25.12",
       "path-to-regexp": "^6.3.0",
       "tmp": "^0.2.4"
-    },
-    "patchedDependencies": {
-      "read-yaml-file@1.1.0": "patches/read-yaml-file@1.1.0.patch"
     },
     "onlyBuiltDependencies": [
       "better-sqlite3",
