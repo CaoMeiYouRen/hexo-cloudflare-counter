@@ -11,7 +11,7 @@ FROM nodejs AS builder
 WORKDIR /app
 
 COPY package.json .npmrc pnpm-lock.yaml pnpm-workspace.yaml /app/
-COPY patches /app/patches
+# COPY patches /app/patches
 COPY apps/server/package.json /app/apps/server/package.json
 COPY packages/core/package.json /app/packages/core/package.json
 
