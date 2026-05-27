@@ -10,6 +10,8 @@ FROM nodejs AS builder
 
 WORKDIR /app
 
+RUN npm install -g pnpm@11
+
 COPY package.json .npmrc pnpm-lock.yaml pnpm-workspace.yaml /app/
 # COPY patches /app/patches
 COPY apps/server/package.json /app/apps/server/package.json
