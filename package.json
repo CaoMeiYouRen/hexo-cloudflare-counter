@@ -116,7 +116,7 @@
     "@hono/node-server": "^2.0.1",
     "await-to-js": "^3.0.0",
     "better-bytes": "^1.2.6",
-    "better-sqlite3": "^12.9.0",
+    "better-sqlite3": "^12.10.0",
     "cmyr-sign": "^1.1.2",
     "dayjs": "^1.11.21",
     "dotenv": "^17.4.2",
