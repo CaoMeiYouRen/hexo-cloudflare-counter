@@ -118,7 +118,7 @@
     "better-bytes": "^1.2.6",
     "better-sqlite3": "^12.9.0",
     "cmyr-sign": "^1.1.2",
-    "dayjs": "^1.11.20",
+    "dayjs": "^1.11.21",
     "dotenv": "^17.4.2",
     "fs-extra": "^11.3.4",
     "hono": "^4.12.18",
