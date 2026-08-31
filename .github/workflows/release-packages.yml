@@ -44,7 +44,7 @@ jobs:
       - run: pnpm run build
       - run: pnpm run test
       - name: Create Version PR or Publish Packages
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
           version: pnpm run version:packages
           publish: pnpm run release:packages
