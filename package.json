@@ -119,7 +119,7 @@
     "better-sqlite3": "^13.0.3",
     "cmyr-sign": "^1.1.2",
     "dayjs": "^1.11.23",
-    "dotenv": "^17.4.2",
+    "dotenv": "^18.0.4",
     "fs-extra": "^11.3.6",
     "hono": "^4.13.9",
     "isomorphic-unfetch": "^4.0.2",
