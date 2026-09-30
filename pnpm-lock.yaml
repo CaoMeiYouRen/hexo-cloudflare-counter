@@ -5722,8 +5722,8 @@ packages:
   undici-types@8.3.0:
     resolution: {integrity: sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ==}
 
-  undici@6.28.0:
-    resolution: {integrity: sha512-LIY910g9TI13YS95lrMFrs8Rm/u/irgHeTWoKCoteeJ04CUJ92eEfj0rVn+7VKMPBpUPiUoBKfhNyLI23EE/KA==}
+  undici@6.29.0:
+    resolution: {integrity: sha512-R+RODBqp6i2pPflGdq+xIOUkl+RNfGgHwoinecKu/JCuf2uO06cOKoDbI2P7Dn6KcswdKwrczbU6IYJ6K8X+wg==}
     engines: {node: '>=18.17'}
 
   unenv@2.0.0-rc.24:
@@ -6135,7 +6135,7 @@ snapshots:
   '@actions/http-client@4.0.1':
     dependencies:
       tunnel: 0.0.6
-      undici: 6.28.0
+      undici: 6.29.0
 
   '@actions/io@3.0.2': {}
 
@@ -7509,7 +7509,7 @@ snapshots:
       p-filter: 4.1.0
       semantic-release: 25.0.9(supports-color@10.2.2)(typescript@6.0.3)
       tinyglobby: 0.2.17
-      undici: 6.28.0
+      undici: 6.29.0
       url-join: 5.0.0
     transitivePeerDependencies:
       - kerberos
@@ -7794,7 +7794,7 @@ snapshots:
       is-buffer: 2.0.5
       is-node-process: 1.2.0
       throttleit: 2.1.0
-      undici: 6.28.0
+      undici: 6.29.0
 
   '@vercel/build-utils@14.13.1':
     dependencies:
@@ -8058,7 +8058,7 @@ snapshots:
       ts-morph: 12.0.0
       tsx: 4.21.0
       typescript: 5.9.3
-      undici: 6.28.0
+      undici: 6.29.0
     transitivePeerDependencies:
       - '@emnapi/core'
       - '@emnapi/runtime'
@@ -8143,7 +8143,7 @@ snapshots:
       ms: 2.1.3
       picocolors: 1.1.1
       tar-stream: 3.1.7
-      undici: 6.28.0
+      undici: 6.29.0
       xdg-app-paths: 5.1.0
       zod: 4.5.1
     transitivePeerDependencies:
@@ -10711,7 +10711,7 @@ snapshots:
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       sharp: 0.35.2
-      undici: 6.28.0
+      undici: 6.29.0
       workerd: 1.20260828.1
       ws: 8.21.3
       youch: 4.1.0-beta.10
@@ -12076,7 +12076,7 @@ snapshots:
 
   undici-types@8.3.0: {}
 
-  undici@6.28.0: {}
+  undici@6.29.0: {}
 
   unenv@2.0.0-rc.24:
     dependencies:
@@ -12193,7 +12193,7 @@ snapshots:
       luxon: 3.7.2
       sandbox: 4.1.0(supports-color@10.2.2)
       smol-toml: 1.6.1
-      undici: 6.28.0
+      undici: 6.29.0
       uuid: 11.1.1
       zod: 4.1.11
     optionalDependencies:
