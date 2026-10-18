@@ -44,3 +44,5 @@ temp
 
 /data
 *.sqlite
+# dependfix
+dependfix-reports/
